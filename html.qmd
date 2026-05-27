@@ -1,0 +1,68 @@
+---
+title: "Produção de Ovos no Brasil"
+author: "Lara Angelina"
+format: html
+---
+
+## PRODUÇÃO DE OVOS NO BRASIL POR ESTADOS
+
+A produção de ovos é uma atividade importante no Brasil, presente em vários estados e responsável por abastecer grande parte do consumo interno. Alguns estados produzem mais do que outros, e essa diferença pode ser melhor entendida com o uso de mapas. Neste trabalho, foi elaborado um mapa que mostra a quantidade de ovos produzidos em cada Unidade da Federação. Os dados utilizados são do IBGE, obtidos através do sistema SIDRA. O objetivo é facilitar a visualização das diferenças de produção entre os estados, tornando a análise mais simples e clara.
+
+## DESENVOLVIMENTO DO MAPA
+
+Pacotes necessários para o desenvolvimento do mapa :
+
+```{r message=FALSE , warning=FALSE}
+library(sidrar)
+library(geobr)
+library(dplyr)
+library(sf)
+library(ggplot2)
+```
+
+Coletas dos Dados\
+Fonte : SIDRA/IBGE
+
+```{r message=FALSE,warning=FALSE}
+dados <- get_sidra(api = "/t/915/n3/all/v/29/p/last%201/c12716/115236")
+```
+
+Verificação das colunas
+
+```{r message=FALSE , warning=FALSE ,results='hide'}
+names(dados)
+```
+
+Seleção das variáveis relevantes
+
+```{r message=FALSE,warning=FALSE}
+dados <- dados %>% select(`Unidade de Medida (Código)`, `Unidade da Federação (Código)`, Valor , `Trimestre (Código)`)
+```
+
+Ajuste do tipo de dado
+
+```{r message=FALSE,warning=FALSE}
+dados$`Unidade da Federação (Código)`<- as.numeric(dados$`Unidade da Federação (Código)`)
+```
+
+Carregamento do Mapa
+
+```{r message=FALSE,warning=FALSE}
+mapa<-read_state(code_state = "all" , year = 2020 )
+```
+
+Junção dos dados com o mapa
+
+```{r message=FALSE,warning=FALSE}
+mapa_final <- left_join(mapa,dados, by = c("code_state" = "Unidade da Federação (Código)"))
+```
+
+Construção do mapa
+
+```{r message=FALSE,warning=FALSE}
+ggplot(mapa_final) + geom_sf(aes(fill = Valor) , color = "white") + geom_sf_text(aes(label = abbrev_state) , size = 2,  fontface = "bold") + scale_fill_viridis_c(option = "plasma" , direction = -1 , name = "Mil Dúzias",labels = scales::comma ,na.value = "gray90" ) + theme_void() + labs(title = "Quantidades de Ovos Produzidos por Unidade da Federação" ,  subtitle = "Brasil - último trimestre disponível (SIDRA/IBGE) ",  fill = "Mil dúzias") + labs(caption = "UFs em cinza: sem dados disponíveis") 
+```
+
+## ANÁLISE
+
+Observa-se maior concentração da produção nas regiões Sul e Sudeste, com destaque para estados como São Paulo e Paraná. Essas regiões apresentam maior desenvolvimento na atividade avícola, o que contribui para os altos níveis de produção.
